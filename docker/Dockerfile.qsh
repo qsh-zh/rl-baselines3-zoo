@@ -1,0 +1,32 @@
+ARG BASE_IMAGE=qinsheng/lab_dev:edge
+FROM $BASE_IMAGE
+
+RUN sudo apt-get -y update \
+    && sudo apt-get -y install \
+    ffmpeg \
+    freeglut3-dev \
+    swig \
+    xvfb \
+    libxrandr2 \
+    && sudo apt-get clean \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /tmp/requirements.txt
+COPY scripts/setup.sh /tmp/setup.sh
+
+RUN sudo chown -R qzhang419 /tmp/requirements.txt
+RUN sudo chown -R qzhang419 /tmp/setup.sh
+
+RUN zsh /tmp/setup.sh
+
+RUN echo '#! /bin/sh\n\
+env DEBIAN_FRONTEND=noninteractive apt-get autoremove -y\n\
+apt-get clean\n\
+find /var/lib/apt/lists -type f -delete\n\
+find /var/cache -type f -delete\n\
+find /var/log -type f -delete\n\
+rm -rf /var/lib/apt/lists/*\n\
+exit 0\n\
+' > cleanup && sudo chmod +x cleanup
+
+RUN sudo ./cleanup
